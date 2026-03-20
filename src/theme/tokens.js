@@ -1,0 +1,18 @@
+export const C = {
+  bg: "#09090F",
+  bgCard: "#111118",
+  bgInput: "#0D0D14",
+  border: "#1E1E2E",
+  borderHover: "#2A2A3E",
+  accent: "#6C63FF",
+  accentDim: "#6C63FF22",
+  accentHover: "#7B74FF",
+  gold: "#F5A623",
+  goldDim: "#F5A62322",
+  text: "#E8E8F0",
+  textMuted: "#6B6B80",
+  textDim: "#3A3A50",
+  success: "#10B981",
+  danger: "#EF4444",
+  warning: "#F5A623",
+}
