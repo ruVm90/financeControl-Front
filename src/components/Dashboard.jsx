@@ -56,7 +56,7 @@ function StatCard({ label, value, unit = "€", change, isPositive = false }) {
 // ─────────────────────────────────────────────
 // COMPONENTE PRINCIPAL DASHBOARD
 // ─────────────────────────────────────────────
-export default function Dashboard() {
+export default function Dashboard({ refreshKey = 0 }) {
   const { token } = useAuth()
 
   const [summary, setSummary] = useState(null)
@@ -108,7 +108,7 @@ export default function Dashboard() {
     return () => {
       cancelled = true
     }
-  }, [token])
+  }, [token, refreshKey])
 
   if (loading) {
     return (

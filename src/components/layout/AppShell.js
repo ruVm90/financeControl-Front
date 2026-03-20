@@ -1,56 +1,119 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useAuth } from "../../context/auth"
+import { api } from "../../lib/api"
 import { C } from "../../theme/tokens"
+import CategoriesPage from "../CategoriesPage"
 import Dashboard from "../Dashboard"
+import ExpensesPage from "../ExpensesPage"
 import Sidebar from "./Sidebar"
 
-function ComingSoon({ pageName }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "60vh",
-        color: C.textMuted,
-      }}
-    >
-      <div
-        style={{
-          width: 64,
-          height: 64,
-          background: C.bgCard,
-          border: `1px solid ${C.border}`,
-          borderRadius: 16,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 20,
-          fontSize: 28,
-        }}
-      >
-        🚧
-      </div>
-      <p style={{ fontSize: 18, fontWeight: 700, color: C.text, margin: "0 0 8px" }}>{pageName}</p>
-      <p style={{ fontSize: 13, margin: 0 }}>Esta sección llegará en la siguiente parte</p>
-    </div>
-  )
-}
-
 export default function AppShell({ user, onLogout }) {
+  const { token } = useAuth()
   const [page, setPage] = useState("dashboard")
+  const [categories, setCategories] = useState([])
+  const [expenses, setExpenses] = useState([])
+  const [loadingCategories, setLoadingCategories] = useState(true)
+  const [loadingExpenses, setLoadingExpenses] = useState(true)
+  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0)
 
-  const expensesCount = null
-  const categoriesCount = null
+  async function reloadCategories() {
+    setLoadingCategories(true)
+    try {
+      const data = await api.getCategories(token)
+      setCategories(Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [])
+    } finally {
+      setLoadingCategories(false)
+    }
+  }
+
+  async function reloadExpenses() {
+    setLoadingExpenses(true)
+    try {
+      const data = await api.getExpenses(token)
+      setExpenses(Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [])
+    } finally {
+      setLoadingExpenses(false)
+    }
+  }
+
+  async function reloadAllData() {
+    await Promise.all([reloadCategories(), reloadExpenses()])
+  }
+
+  function refreshDashboard() {
+    setDashboardRefreshKey((current) => current + 1)
+  }
+
+  async function handleDataMutation() {
+    await reloadAllData()
+    refreshDashboard()
+  }
+
+  useEffect(() => {
+    if (!token) return
+
+    let cancelled = false
+
+    async function loadInitialData() {
+      setLoadingCategories(true)
+      setLoadingExpenses(true)
+
+      try {
+        const [categoriesData, expensesData] = await Promise.all([
+          api.getCategories(token),
+          api.getExpenses(token),
+        ])
+
+        if (cancelled) return
+
+        setCategories(Array.isArray(categoriesData?.data) ? categoriesData.data : Array.isArray(categoriesData) ? categoriesData : [])
+        setExpenses(Array.isArray(expensesData?.data) ? expensesData.data : Array.isArray(expensesData) ? expensesData : [])
+      } finally {
+        if (!cancelled) {
+          setLoadingCategories(false)
+          setLoadingExpenses(false)
+        }
+      }
+    }
+
+    loadInitialData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [token])
+
+  const expensesCount = expenses.length
+  const categoriesCount = categories.length
 
   function renderPage() {
-  switch (page) {
-    case "dashboard":   return <Dashboard />
-    case "expenses":    return <ComingSoon pageName="Gastos" />
-    case "categories":  return <ComingSoon pageName="Categorías" />
-    default:            return <Dashboard />
+    switch (page) {
+      case "dashboard":
+        return <Dashboard refreshKey={dashboardRefreshKey} />
+      case "expenses":
+        return (
+          <ExpensesPage
+            expenses={expenses}
+            categories={categories}
+            loading={loadingExpenses || loadingCategories}
+            onSaved={handleDataMutation}
+            onDeleted={handleDataMutation}
+            onGoToCategories={() => setPage("categories")}
+          />
+        )
+      case "categories":
+        return (
+          <CategoriesPage
+            categories={categories}
+            loading={loadingCategories}
+            onSaved={handleDataMutation}
+            onDeleted={handleDataMutation}
+          />
+        )
+      default:
+        return <Dashboard refreshKey={dashboardRefreshKey} />
+    }
   }
-}
 
   return (
     <div
