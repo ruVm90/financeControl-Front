@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { C } from "../../theme/tokens"
+import Dashboard from "../Dashboard"
 import Sidebar from "./Sidebar"
 
 function ComingSoon({ pageName }) {
@@ -43,17 +44,13 @@ export default function AppShell({ user, onLogout }) {
   const categoriesCount = null
 
   function renderPage() {
-    switch (page) {
-      case "dashboard":
-        return <ComingSoon pageName="Dashboard" />
-      case "expenses":
-        return <ComingSoon pageName="Gastos" />
-      case "categories":
-        return <ComingSoon pageName="Categorías" />
-      default:
-        return <ComingSoon pageName="Dashboard" />
-    }
+  switch (page) {
+    case "dashboard":   return <Dashboard />
+    case "expenses":    return <ComingSoon pageName="Gastos" />
+    case "categories":  return <ComingSoon pageName="Categorías" />
+    default:            return <Dashboard />
   }
+}
 
   return (
     <div
